@@ -1,0 +1,28 @@
+EXCLUDE_QUERY_DIR
+B /Users/mikeskoe/.opam/default/lib/bytes
+B /Users/mikeskoe/.opam/default/lib/lwd
+B /Users/mikeskoe/.opam/default/lib/nottui
+B /Users/mikeskoe/.opam/default/lib/notty
+B /Users/mikeskoe/.opam/default/lib/ocaml
+B /Users/mikeskoe/.opam/default/lib/seq
+B /Users/mikeskoe/.opam/default/lib/uchar
+B /Users/mikeskoe/.opam/default/lib/uucp
+B /Users/mikeskoe/.opam/default/lib/uuseg
+B /Users/mikeskoe/.opam/default/lib/uutf
+B ../../_build/default/src/entities/.entities.objs/byte
+B ../../_build/default/src/ui/.ui.objs/byte
+B ../../_build/default/src/utils/.utils.objs/byte
+S /Users/mikeskoe/.opam/default/lib/bytes
+S /Users/mikeskoe/.opam/default/lib/lwd
+S /Users/mikeskoe/.opam/default/lib/nottui
+S /Users/mikeskoe/.opam/default/lib/notty
+S /Users/mikeskoe/.opam/default/lib/ocaml
+S /Users/mikeskoe/.opam/default/lib/seq
+S /Users/mikeskoe/.opam/default/lib/uchar
+S /Users/mikeskoe/.opam/default/lib/uucp
+S /Users/mikeskoe/.opam/default/lib/uuseg
+S /Users/mikeskoe/.opam/default/lib/uutf
+S ../entities
+S .
+S ../utils
+FLG -open Ui__ -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs
