@@ -58,7 +58,7 @@ let adding_view (title: string) (description: string) (field: State.field) =
             in
             I.(name <-> tip <-> (input <|> cursor))
 
-let draw state =
+let draw term state =
       let info = info ()
       and divider = I.(char A.empty '-' 10 1)
       and view = match state with
@@ -67,10 +67,10 @@ let draw state =
             | State.Add state ->
                   adding_view state.title state.description state.field
       in
-      Term.image term I.(info <-> divider <-> view);
+      Term.image term I.(info <-> divider <-> view)
 
 let reducer (term: Term.t) (state, _msg) =
-    let _ = draw state;
+    let _ = draw term state
     and msg = getEvent term state
     in (state, msg)
 
