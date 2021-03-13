@@ -13,7 +13,8 @@ type msg =
     | ToView of Thing.t list
     | UpdateField of field * string
     | AddThing
-    | DeleteThing
+    | DeleteThing of int
+    | RequestConfirm of string * msg
 
 type t =
     | View of {
@@ -25,6 +26,10 @@ type t =
         description: string;
         field: field;
     }
+    | Confirm of {
+        text: string;
+        confirmMsg: msg;
+    }
 
 let up = function
     | View state -> View {
@@ -32,6 +37,7 @@ let up = function
         selected = max 0 (state.selected - 1)
     }
     | Add state -> Add state
+    | Confirm state -> Confirm state
 
 let down = function
     | View state -> View {
@@ -39,6 +45,13 @@ let down = function
         selected = min (List.length state.things - 1) (state.selected + 1)
     }
     | Add state -> Add state
+    | Confirm state -> Confirm state
+
+let to_confirm text confirmMsg =
+    Confirm {
+        text;
+        confirmMsg;
+    }
 
 let to_add =
     Add {
@@ -61,6 +74,7 @@ let update_field state field str =
         else
             Add { state with description = str; field = Description }
     | View state -> View state
+    | Confirm state -> Confirm state
 
 let reducer (state, msg) =
     let state =
@@ -73,6 +87,7 @@ let reducer (state, msg) =
         | ToView things -> to_view things
         | UpdateField (field, str) -> update_field state field str
         | AddThing -> state
-        | DeleteThing -> state
+        | DeleteThing _ -> state
+        | RequestConfirm (text, confirmMsg) -> to_confirm text confirmMsg
     in (state, msg)
 
