@@ -1,5 +1,5 @@
 
-- State(state, msg) => state
-- UI(state, msg) => render effect => msg
-- DB(db, state, msg) => db effect => state
+- State     (state, msg) =>                      (state, msg)
+- UI (term) (state, msg) => * render effect * => (state, msg)
+- DB (db)   (state, msg) => * db effect *     => (state, msg)
 

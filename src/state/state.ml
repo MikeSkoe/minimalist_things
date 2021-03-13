@@ -62,15 +62,17 @@ let update_field state field str =
             Add { state with description = str; field = Description }
     | View state -> View state
 
-let reducer state =
-    function
-    | Init -> state
-    | Quit -> state
-    | Up -> up state
-    | Down -> down state
-    | ToAdd -> to_add
-    | ToView things -> to_view things
-    | UpdateField (field, str) -> update_field state field str
-    | AddThing -> state
-    | DeleteThing -> state
+let reducer (state, msg) =
+    let state =
+        match msg with
+        | Init -> state
+        | Quit -> state
+        | Up -> up state
+        | Down -> down state
+        | ToAdd -> to_add
+        | ToView things -> to_view things
+        | UpdateField (field, str) -> update_field state field str
+        | AddThing -> state
+        | DeleteThing -> state
+    in (state, msg)
 

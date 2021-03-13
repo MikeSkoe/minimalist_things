@@ -20,17 +20,19 @@ let delete_thing db state =
         in
         State.to_view things
 
-let reducer (db: Index.t) state =
+let reducer (db: Index.t) (state, msg) =
     let open State
     in
-    function
-    | Quit -> state
-    | Init -> state
-    | Up -> state
-    | Down -> state
-    | ToAdd -> state
-    | ToView things -> State.to_view things
-    | UpdateField _ -> state
-    | AddThing -> add_thing db state
-    | DeleteThing -> delete_thing db state
+    let state =
+        match msg with
+        | Quit -> state
+        | Init -> state
+        | Up -> state
+        | Down -> state
+        | ToAdd -> state
+        | ToView things -> State.to_view things
+        | UpdateField _ -> state
+        | AddThing -> add_thing db state
+        | DeleteThing -> delete_thing db state
+    in (state, msg)
 
