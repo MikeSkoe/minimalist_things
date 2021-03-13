@@ -1,0 +1,5 @@
+
+- State(state, msg) => state
+- UI(state, msg) => render effect => msg
+- DB(db, state, msg) => db effect => state
+

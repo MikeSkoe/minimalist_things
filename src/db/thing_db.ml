@@ -10,7 +10,7 @@ let get_data (db: Index.t) =
                   and name = string_of_index 1
                   and necessity = string_of_index 2
                   in
-                  iter [Entities.Thing.make ~id ~name ~necessity] @ datas
+                  iter [State.Thing.make ~id ~name ~necessity] @ datas
             | _ -> datas
       in iter [];;
 
@@ -50,12 +50,12 @@ let update (db: Index.t) id (update: string -> string -> int -> string * string 
                               |> Sqlite3.Data.to_string_coerce in
                   let name = string_of_index 0
                   and necessity = string_of_index 1
-                  and group_id = int_of_index 2 in
-                  begin match update name necessity group_id with
+                  and group_id = int_of_index 2
+                  in
+                  (match update name necessity group_id with
                         | (name, necessity, group_id) ->
                                     print_endline (name
                                           ^ ": " ^ necessity
                                           ^ " - " ^ (string_of_int group_id));
-                                    true
-                  end
+                                    true)
             | _ -> false

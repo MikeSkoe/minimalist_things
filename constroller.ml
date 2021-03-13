@@ -1,4 +1,4 @@
-let db = Db.Index.make ()
+(* let db = Db.Index.make () *)
 
 (* let show_things () =
       let datas = Db.Thing_db.get_data db in
