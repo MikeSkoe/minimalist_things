@@ -11,5 +11,5 @@ let rec run (state, msg) =
           |> Ui.reducer term
           |> run
 
-let _ = run (State.to_view Db.(get_data db), State.Init)
+let _ = run (State.initial_state, State.Init)
 
