@@ -1,8 +1,8 @@
 module Thing = Thing
 
 type field =
-    | Title
-    | Description
+    | Name
+    | Necessity
 
 type msg =
     | Quit
@@ -23,8 +23,8 @@ type t =
         selected: int;
     }
     | Edit of {
-        title: string;
-        description: string;
+        name: string;
+        necessity: string;
         field: field;
         someId: int option;
     }
@@ -68,26 +68,26 @@ let to_edit state someId =
         | Some id ->
             let thing = Thing.get_thing state.things id
             in Edit {
-                title = thing.name;
-                description = thing.necessity;
+                name = thing.name;
+                necessity = thing.necessity;
                 someId;
-                field = Title;
+                field = Name;
             }
         | None -> Edit {
-            title = "";
-            description = "";
+            name = "";
+            necessity = "";
             someId;
-            field = Title;
+            field = Name;
         }
         )
     | Confirm state -> Confirm state
 
-let can_save field title description =
-    let title_length = title |> String.trim |> String.length
-    and description_length = description |> String.trim |> String.length
-    in field = Description
-    && title_length > 0
-    && description_length > 0
+let can_save field name necessity =
+    let name_length = name |> String.trim |> String.length
+    and necessity_length = necessity |> String.trim |> String.length
+    in field = Necessity
+    && name_length > 0
+    && necessity_length > 0
 
 let to_view things =
     View {
@@ -98,10 +98,10 @@ let to_view things =
 let update_field state field str =
     match state with
     | Edit state ->
-        if field = Title then
-            Edit { state with title = str; field = Title }
+        if field = Name then
+            Edit { state with name = str; field = Name }
         else
-            Edit { state with description = str; field = Description }
+            Edit { state with necessity = str; field = Necessity }
     | View state -> View state
     | Confirm state -> Confirm state
 

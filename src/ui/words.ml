@@ -2,7 +2,7 @@ open Notty
 
 type word = {
   id: int;
-  title: string;
+  name: string;
 }
 
 type t = {
@@ -16,7 +16,7 @@ type shift =
 
 let make strs : t = ({
   selected = 0;
-  words = List.mapi (fun id title -> {id; title;}) strs;
+  words = List.mapi (fun id name -> {id; name;}) strs;
 })
 
 let is_selected (selected, _word_list) (id, _str) =
@@ -45,10 +45,10 @@ let img_of_words t =
 
   t.words
   |> List.map
-    (fun {id; title} ->
+    (fun {id; name} ->
       I.(<|>)
         (if id = t.selected then curr else not_curr)
-        (I.string A.empty title)
+        (I.string A.empty name)
     )
   |> List.fold_left
     (fun img str -> I.(<->) img str)

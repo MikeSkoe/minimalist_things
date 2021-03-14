@@ -14,7 +14,7 @@ let add_thing db state =
             | Some id -> Thing_db.delete db id
             | None -> true
             )in
-        let _ = Thing_db.add db state.title state.description
+        let _ = Thing_db.add db state.name state.necessity
         in init db
 
     | State.View state -> State.View state

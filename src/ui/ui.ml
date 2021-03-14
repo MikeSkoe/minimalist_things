@@ -35,28 +35,28 @@ let getEvent term state =
     | Edit state -> (
         match event with
         | `Key (`ASCII 'q', _) -> Quit
-        | `Key (`Arrow `Up, _) -> UpdateField (Title, state.title)
-        | `Key (`Arrow `Down, _) -> UpdateField (Description, state.description)
+        | `Key (`Arrow `Up, _) -> UpdateField (Name, state.name)
+        | `Key (`Arrow `Down, _) -> UpdateField (Necessity, state.necessity)
         | `Key (`Enter, _) ->
-            if state.field = Description
-            && State.can_save state.field state.title state.description
+            if state.field = Necessity
+            && State.can_save state.field state.name state.necessity
                 then EditThing
-                else UpdateField (Description, state.description)
+                else UpdateField (Necessity, state.necessity)
 
         | `Key (`ASCII chr, _) ->
-            if state.field = Title then UpdateField (Title, (state.title ^ (Char.escaped chr)))
-            else UpdateField (Description, (state.description ^ (Char.escaped chr)))
+            if state.field = Name then UpdateField (Name, (state.name ^ (Char.escaped chr)))
+            else UpdateField (Necessity, (state.necessity ^ (Char.escaped chr)))
 
         | `Key (`Backspace, _) ->
-            if state.field = Title
+            if state.field = Name
                 then UpdateField (
-                    Title,
-                    try String.sub state.title 0 ((String.length state.title) - 1)
+                    Name,
+                    try String.sub state.name 0 ((String.length state.name) - 1)
                     with Invalid_argument _ -> ""
                 )
                 else UpdateField (
-                    Description,
-                    try String.sub state.description 0 ((String.length state.description) - 1)
+                    Necessity,
+                    try String.sub state.necessity 0 ((String.length state.necessity) - 1)
                     with Invalid_argument _ -> ""
                 )
 
@@ -79,9 +79,9 @@ let img_of_things (things: State.Thing.t list) (selected: int) =
     |> List.map I.(string A.empty)
     |> List.fold_left I.(<->) I.empty
 
-let edit_view field title description=
+let edit_view field name necessity=
     let info_save = I.(string
-        (if State.can_save field title description
+        (if State.can_save field name necessity
             then A.empty
             else A.(fg lightblack))
         "[enter]-save "
@@ -90,15 +90,15 @@ let edit_view field title description=
     let info = I.(info_save <|> info_cancel) in
     let cursor = I.(char A.(bg white) ' ' 1 1) in
     let empty = I.(char A.empty ' ' 1 1) in
-    let (name_cursor, description_cursor) =
-        if field = State.Title then (cursor, empty)
+    let (name_cursor, necessity_cursor) =
+        if field = State.Name then (cursor, empty)
         else (empty, cursor) in
-    let name = I.(string A.empty ("Name        : " ^ title)) in
-    let description = I.(string A.empty ("Description : " ^ description))
+    let name = I.(string A.empty ("Name      : " ^ name)) in
+    let necessity = I.(string A.empty ("Necessity : " ^ necessity))
     in I.(
         info
         <-> (name <|> name_cursor)
-        <-> (description <|> description_cursor)
+        <-> (necessity <|> necessity_cursor)
     )
 
 let list_view things selected =
@@ -116,7 +116,7 @@ let confirm_view text =
 let draw term state =
     let view =
         match state with
-        | State.Edit {field; title; description; _} -> edit_view field title description
+        | State.Edit {field; name; necessity; _} -> edit_view field name necessity
         | State.View {things; selected} -> list_view things selected
         | State.Confirm {text; _} -> confirm_view text
     in Term.image term view
