@@ -29,7 +29,7 @@ let getEvent term state =
 
         | `Key (`ASCII 'q', _)
 
-        | _ -> Nothing
+        | _ -> System Nothing
     )
 
     | Edit state -> (
@@ -40,7 +40,7 @@ let getEvent term state =
         | `Key (`Enter, _) ->
             if state.field = Necessity
             && State.can_save state.field state.name state.necessity
-                then Db EditThing
+                then Db (EditThing { name = state.name; necessity = state.necessity; someId = state.someId })
                 else UI (UpdateField (Necessity, state.necessity))
 
         | `Key (`ASCII chr, _) ->
@@ -60,17 +60,17 @@ let getEvent term state =
                     with Invalid_argument _ -> ""
                 ))
 
-        | `Key (`Escape, _) -> System Init
+        | `Key (`Escape, _) -> Navigation ToView
 
-        | _ -> Nothing
+        | _ -> System Nothing
     )
 
     | Confirm state -> (
         match event with
         | `Key (`ASCII 'q', _) -> System Quit
-        | `Key (`Escape, _) -> System Init
+        | `Key (`Escape, _) -> Navigation ToView
         | `Key (`Enter, _) -> state.confirmMsg
-        | _ -> Nothing
+        | _ -> System Nothing
     )
 
 let img_of_things (things: State.Thing.t list) (selected: int) =

@@ -6,7 +6,7 @@ type field =
 
 type system_msg =
     | Quit
-    | Init
+    | Nothing
 
 type ui_msg =
     | Up
@@ -15,18 +15,23 @@ type ui_msg =
 
 type navigation_msg =
     | ToEdit of int option
-    | ToView of Thing.t list
+    | ToView
 
 type db_msg =
-    | EditThing
+    | LoadView
+    | LoadEdit 
+    | EditThing of {
+        name: string;
+        necessity: string;
+        someId: int option;
+    }
     | DeleteThing of int
 
 type msg =
     | System of system_msg
-    | UI of ui_msg
     | Navigation of navigation_msg
+    | UI of ui_msg
     | Db of db_msg
-    | Nothing 
     | RequestConfirm of string * msg
 
 type t =
@@ -75,23 +80,12 @@ let to_confirm text confirmMsg =
 let to_edit state someId =
     match state with
     | Edit state -> Edit state
-    | View state ->
-        (match someId with
-        | Some id ->
-            let thing = Thing.get_thing state.things id
-            in Edit {
-                name = thing.name;
-                necessity = thing.necessity;
-                someId;
-                field = Name;
-            }
-        | None -> Edit {
-            name = "";
-            necessity = "";
-            someId;
-            field = Name;
-        }
-        )
+    | View _ -> Edit {
+        someId;
+        name = "";
+        necessity = "";
+        field = Name;
+    }
     | Confirm state -> Confirm state
 
 let can_save field name necessity =
@@ -101,19 +95,18 @@ let can_save field name necessity =
     && name_length > 0
     && necessity_length > 0
 
-let to_view things =
+let to_view =
     View {
-        things;
+        things = [];
         selected = 0;
     }
 
 let update_field state field str =
     match state with
     | Edit state ->
-        if field = Name then
-            Edit { state with name = str; field = Name }
-        else
-            Edit { state with necessity = str; field = Necessity }
+        if field = Name
+            then Edit { state with name = str; field = Name }
+            else Edit { state with necessity = str; field = Necessity }
     | View state -> View state
     | Confirm state -> Confirm state
 
@@ -127,12 +120,21 @@ let reducer (state, msg) =
         )
         | Navigation navigation_msg -> (match navigation_msg with
             | ToEdit someId -> to_edit state someId
-            | ToView things -> to_view things
+            | ToView -> to_view
         )
         | RequestConfirm (text, confirmMsg) -> to_confirm text confirmMsg
         | System _ -> state
         | Db _ -> state
-        | Nothing -> state
+
+    and msg = match msg with
+        | Navigation navigation_msg -> (match navigation_msg with
+            | ToEdit _ -> Db LoadEdit
+            | ToView -> Db LoadView
+        )
+        | UI _ -> msg
+        | RequestConfirm _ -> msg
+        | System _ -> msg
+        | Db _ -> msg
 
     in (state, msg)
 

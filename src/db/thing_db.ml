@@ -7,20 +7,33 @@ let create_table (db: Index.t) =
         | _ -> false
 
 let get_data (db: Index.t) =
-      let select_sql = "SELECT id, name, necessity FROM things" in
-      let select_stmt = Sqlite3.prepare db select_sql in
-      let int_of_index = Index.int_of_index select_stmt in
-      let string_of_index = Index.string_of_index select_stmt in
+    let select_sql = "SELECT id, name, necessity FROM things" in
+    let select_stmt = Sqlite3.prepare db select_sql in
+    let int_of_index = Index.int_of_index select_stmt in
+    let string_of_index = Index.string_of_index select_stmt in
 
-      let rec iter datas = match Sqlite3.step select_stmt with
-            | Sqlite3.Rc.ROW ->
-                  let id = int_of_index 0
-                  and name = string_of_index 1
-                  and necessity = string_of_index 2
-                  in
-                  iter [State.Thing.make ~id ~name ~necessity] @ datas
-            | _ -> datas
-      in iter [];;
+    let rec iter datas = match Sqlite3.step select_stmt with
+        | Sqlite3.Rc.ROW ->
+            let id = int_of_index 0
+            and name = string_of_index 1
+            and necessity = string_of_index 2 in
+            iter [State.Thing.make ~id ~name ~necessity] @ datas
+        | _ -> datas
+    in iter [];;
+
+let get_thing (db: Index.t) id =
+    let select_sql = Printf.sprintf "SELECT id, name, necessity FROM things WHERE id = '%i'" id in
+    let select_stmt = Sqlite3.prepare db select_sql in
+    let int_of_index = Index.int_of_index select_stmt in
+    let string_of_index = Index.string_of_index select_stmt in
+
+    match Sqlite3.step select_stmt with
+        | Sqlite3.Rc.ROW ->
+            let id = int_of_index 0
+            and name = string_of_index 1
+            and necessity = string_of_index 2 in
+            Some (State.Thing.make ~id ~name ~necessity)
+        | _ -> None
 
 let add (db: Index.t) name necessity =
       let insert_sql = Printf.sprintf
