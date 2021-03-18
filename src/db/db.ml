@@ -1,4 +1,8 @@
-let make () = Sqlite3.db_open "test.db"
+let make db_name =
+    let db = Sqlite3.db_open db_name in
+    let _ = Thing_db.create_table db in
+
+    db
 
 let get_data = Thing_db.get_data
 
@@ -32,16 +36,20 @@ let reducer (db: Index.t) (state, msg) =
     let open State in
     let state =
         match msg with
-        | Quit -> state
-        | Init -> init db
+        | System system_msg -> (match system_msg with
+            | Quit -> state
+            | Init -> init db
+        )
+        | UI _ -> state
+        | Navigation navigation_msg -> (match navigation_msg with
+            | ToEdit _ -> state
+            | ToView things -> State.to_view things
+        )
+        | Db db_msg -> (match db_msg with
+            | EditThing -> add_thing db state
+            | DeleteThing id -> delete_thing db state id
+        )
         | Nothing -> state
-        | Up -> state
-        | Down -> state
-        | ToEdit _ -> state
-        | ToView things -> State.to_view things
-        | UpdateField _ -> state
-        | EditThing -> add_thing db state
-        | DeleteThing id -> delete_thing db state id
         | RequestConfirm _ -> state
     in (state, msg)
 

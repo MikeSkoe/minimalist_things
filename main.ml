@@ -1,15 +1,16 @@
-let db = Db.make ()
+let db = Db.make "test.db"
 let term = Notty_unix.Term.create ()
 
 let rec run (state, msg) =
-      match msg with
-      | State.Quit -> ()
-      | msg -> 
-          (state, msg)
-          |> State.reducer
-          |> Db.reducer db
-          |> Ui.reducer term
-          |> run
+    let open State in
+    match msg with
+    | System Quit -> ()
+    | msg -> 
+    (state, msg)
+        |> State.reducer
+        |> Db.reducer db
+        |> Ui.reducer term
+        |> run
 
-let _ = run (State.initial_state, State.Init)
+let _ = run State.(initial_state, System Init)
 

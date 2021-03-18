@@ -1,3 +1,11 @@
+
+let create_table (db: Index.t) =
+    let create_sql = "CREATE TABLE IF NOT EXISTS things (id integer PRIMARY KEY, name text NOT null, necessity text NOT NULL)" in
+
+    match Sqlite3.exec db create_sql with
+        | Sqlite3.Rc.OK -> true
+        | _ -> false
+
 let get_data (db: Index.t) =
       let select_sql = "SELECT id, name, necessity FROM things" in
       let select_stmt = Sqlite3.prepare db select_sql in

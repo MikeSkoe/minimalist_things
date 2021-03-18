@@ -7,25 +7,25 @@ let getEvent term state =
     in match state with
     | View state -> (
         match event with
-        | `Key (`Escape, _) -> Quit
+        | `Key (`Escape, _) -> System Quit
         | `Key (`Arrow `Up, _)
-        | `Key (`ASCII 'k', _) -> Up
+        | `Key (`ASCII 'k', _) -> UI Up
 
         | `Key (`Arrow `Down, _)
-        | `Key (`ASCII 'j', _) -> Down
+        | `Key (`ASCII 'j', _) -> UI Down
 
-        | `Key (`ASCII 'a', _) -> ToEdit None
+        | `Key (`ASCII 'a', _) -> Navigation (ToEdit None)
 
         | `Key (`Enter, _)
         | `Key (`ASCII 'e', _) ->
-            ToEdit (State.Thing.get_id state.things state.selected)
+            Navigation (ToEdit (State.Thing.get_id state.things state.selected))
 
         | `Key (`Backspace, _)
         | `Key (`ASCII 'd', _) ->
             let text = "Are your shure, you want to delete the item?"
             and id = List.(nth state.things state.selected).id
             in
-            RequestConfirm (text, DeleteThing id)
+            RequestConfirm (text, Db (DeleteThing id))
 
         | `Key (`ASCII 'q', _)
 
@@ -34,41 +34,41 @@ let getEvent term state =
 
     | Edit state -> (
         match event with
-        | `Key (`ASCII 'q', _) -> Quit
-        | `Key (`Arrow `Up, _) -> UpdateField (Name, state.name)
-        | `Key (`Arrow `Down, _) -> UpdateField (Necessity, state.necessity)
+        | `Key (`ASCII 'q', _) -> System Quit
+        | `Key (`Arrow `Up, _) -> UI (UpdateField (Name, state.name))
+        | `Key (`Arrow `Down, _) -> UI (UpdateField (Necessity, state.necessity))
         | `Key (`Enter, _) ->
             if state.field = Necessity
             && State.can_save state.field state.name state.necessity
-                then EditThing
-                else UpdateField (Necessity, state.necessity)
+                then Db EditThing
+                else UI (UpdateField (Necessity, state.necessity))
 
         | `Key (`ASCII chr, _) ->
-            if state.field = Name then UpdateField (Name, (state.name ^ (Char.escaped chr)))
-            else UpdateField (Necessity, (state.necessity ^ (Char.escaped chr)))
+            if state.field = Name then UI (UpdateField (Name, (state.name ^ (Char.escaped chr))))
+            else UI (UpdateField (Necessity, (state.necessity ^ (Char.escaped chr))))
 
         | `Key (`Backspace, _) ->
             if state.field = Name
-                then UpdateField (
+                then UI (UpdateField (
                     Name,
                     try String.sub state.name 0 ((String.length state.name) - 1)
                     with Invalid_argument _ -> ""
-                )
-                else UpdateField (
+                ))
+                else UI (UpdateField (
                     Necessity,
                     try String.sub state.necessity 0 ((String.length state.necessity) - 1)
                     with Invalid_argument _ -> ""
-                )
+                ))
 
-        | `Key (`Escape, _) -> Init
+        | `Key (`Escape, _) -> System Init
 
         | _ -> Nothing
     )
 
     | Confirm state -> (
         match event with
-        | `Key (`ASCII 'q', _) -> Quit
-        | `Key (`Escape, _) -> Init
+        | `Key (`ASCII 'q', _) -> System Quit
+        | `Key (`Escape, _) -> System Init
         | `Key (`Enter, _) -> state.confirmMsg
         | _ -> Nothing
     )

@@ -4,17 +4,29 @@ type field =
     | Name
     | Necessity
 
-type msg =
+type system_msg =
     | Quit
     | Init
-    | Nothing
+
+type ui_msg =
     | Up
     | Down
+    | UpdateField of field * string
+
+type navigation_msg =
     | ToEdit of int option
     | ToView of Thing.t list
-    | UpdateField of field * string
+
+type db_msg =
     | EditThing
     | DeleteThing of int
+
+type msg =
+    | System of system_msg
+    | UI of ui_msg
+    | Navigation of navigation_msg
+    | Db of db_msg
+    | Nothing 
     | RequestConfirm of string * msg
 
 type t =
@@ -108,16 +120,19 @@ let update_field state field str =
 let reducer (state, msg) =
     let state =
         match msg with
-        | Init -> state
-        | Quit -> state
-        | Up -> up state
-        | Nothing -> state
-        | Down -> down state
-        | ToEdit someId -> to_edit state someId
-        | ToView things -> to_view things
-        | UpdateField (field, str) -> update_field state field str
-        | EditThing -> state
-        | DeleteThing _ -> state
+        | UI cursor_msg -> (match cursor_msg with
+            | Up -> up state
+            | Down -> down state
+            | UpdateField (field, str) -> update_field state field str
+        )
+        | Navigation navigation_msg -> (match navigation_msg with
+            | ToEdit someId -> to_edit state someId
+            | ToView things -> to_view things
+        )
         | RequestConfirm (text, confirmMsg) -> to_confirm text confirmMsg
+        | System _ -> state
+        | Db _ -> state
+        | Nothing -> state
+
     in (state, msg)
 
