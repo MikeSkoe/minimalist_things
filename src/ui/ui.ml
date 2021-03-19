@@ -6,30 +6,42 @@ let getEvent term state =
     let event = Term.event term
     in match state with
     | View state -> (
-        match event with
-        | `Key (`Escape, _) -> System Quit
-        | `Key (`Arrow `Up, _)
-        | `Key (`ASCII 'k', _) -> UI Up
+        match state.query with
+            | (true, query) -> (
+                match event with
+                | `Key (`Enter, _) -> UI (UpdateQuery (false, query))
+                | `Key (`Escape, _) -> UI (UpdateQuery (false, ""))
+                | `Key (`ASCII chr, _) -> UI (UpdateQuery (true, query ^ (Char.escaped chr)))
+                | _ -> System Nothing
+            )
+            | (false, _query) -> (
+                match event with
+                | `Key (`Escape, _) -> System Quit
+                | `Key (`Arrow `Up, _)
+                | `Key (`ASCII 'k', _) -> UI Up
 
-        | `Key (`Arrow `Down, _)
-        | `Key (`ASCII 'j', _) -> UI Down
+                | `Key (`Arrow `Down, _)
+                | `Key (`ASCII 'j', _) -> UI Down
 
-        | `Key (`ASCII 'a', _) -> Navigation (ToEdit None)
+                | `Key (`ASCII 'a', _) -> Navigation (ToEdit None)
 
-        | `Key (`Enter, _)
-        | `Key (`ASCII 'e', _) ->
-            Navigation (ToEdit (State.Thing.get_id state.things state.selected))
+                | `Key (`Enter, _)
+                | `Key (`ASCII 'e', _) ->
+                    Navigation (ToEdit (State.Thing.get_id state.things state.selected))
 
-        | `Key (`Backspace, _)
-        | `Key (`ASCII 'd', _) ->
-            let text = "Are your shure, you want to delete the item?"
-            and id = List.(nth state.things state.selected).id
-            in
-            RequestConfirm (text, Db (DeleteThing id))
+                | `Key (`Backspace, _)
+                | `Key (`ASCII 'd', _) ->
+                    let text = "Are your shure, you want to delete the item?"
+                    and id = List.(nth state.things state.selected).id
+                    in
+                    RequestConfirm (text, Db (DeleteThing id))
 
-        | `Key (`ASCII 'q', _)
+                | `Key (`ASCII '/', _) -> UI (UpdateQuery (true, ""))
 
-        | _ -> System Nothing
+                | `Key (`ASCII 'q', _)
+
+                | _ -> System Nothing
+            )
     )
 
     | Edit state -> (
@@ -101,11 +113,22 @@ let edit_view field name necessity=
         <-> (necessity <|> necessity_cursor)
     )
 
-let list_view things selected =
+let list_view things selected query =
+    let debug = I.(string A.empty ("len: " ^ (string_of_int (List.length things)) ^ " selected" ^ (string_of_int selected))) in
+    let query =
+        let suffix = I.(char A.empty '/' 1 1) in
+        match query with
+        | (true, str) -> 
+            let cursor = I.(char A.(bg white) ' ' 1 1) in
+            let str = I.(string A.empty str) in
+            I.(suffix <|> str <|> cursor)
+        | (false, str) ->
+            let str = I.(string A.empty str) in
+            I.(suffix <|> str) in
     let info = I.(string A.empty "[j]-down [k]-up [a]-add item [e]-edit item [d]-delete item")
     and divider = I.(char A.empty '-' 10 1)
     and view = img_of_things things selected
-    in I.(info <-> divider <-> view)
+    in I.(debug <-> query <-> info <-> divider <-> view)
 
 let confirm_view text =
     let info = I.(string A.empty text)
@@ -117,7 +140,7 @@ let draw term state =
     let view =
         match state with
         | State.Edit {field; name; necessity; _} -> edit_view field name necessity
-        | State.View {things; selected} -> list_view things selected
+        | State.View {things; selected; query } -> list_view things selected query
         | State.Confirm {text; _} -> confirm_view text
     in Term.image term view
 

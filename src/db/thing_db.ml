@@ -6,8 +6,11 @@ let create_table (db: Index.t) =
         | Sqlite3.Rc.OK -> true
         | _ -> false
 
-let get_data (db: Index.t) =
-    let select_sql = "SELECT id, name, necessity FROM things" in
+let get_data (db: Index.t) opt_str =
+    let select_sql =
+        match opt_str with
+        | Some query -> ("SELECT id, name, necessity FROM things WHERE necessity LIKE '%" ^ query ^ "%'")
+        | None -> "SELECT id, name, necessity FROM things" in
     let select_stmt = Sqlite3.prepare db select_sql in
     let int_of_index = Index.int_of_index select_stmt in
     let string_of_index = Index.string_of_index select_stmt in

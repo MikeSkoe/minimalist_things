@@ -10,10 +10,11 @@ let delete_thing db state id =
     match state with
     | Confirm _ ->
         let _ = Thing_db.delete db id in
-        let things = Thing_db.get_data db in
+        let things = Thing_db.get_data db None in
         View {
             things;
             selected = 0;
+            query = (false, "");
         }
     | Edit state -> Edit state
     | View state -> View state
@@ -27,19 +28,20 @@ let edit_thing db state someId name necessity =
             | None -> true
         ) in
         let _ = Thing_db.add db name necessity in
-        let things = Thing_db.get_data db in
+        let things = Thing_db.get_data db None in
         View {
             things;
             selected = 0;
+            query = (false, "");
         }
     | View state -> View state
     | Confirm state -> Confirm state
 
-let load_view db state =
+let load_view db state str_opt =
     let open State in
     match state with
     | View state ->
-        let things = Thing_db.get_data db in
+        let things = Thing_db.get_data db str_opt in
         View {
             state with
             things;
@@ -69,7 +71,7 @@ let reducer (db: Index.t) (state, msg) =
     let state =
         match msg with
         | Db db_msg -> (match db_msg with
-            | LoadView -> load_view db state
+            | LoadView str_opt -> load_view db state str_opt
             | LoadEdit -> load_edit db state 
             | EditThing { someId; necessity; name; } -> edit_thing db state someId name necessity 
             | DeleteThing id -> delete_thing db state id

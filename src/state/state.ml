@@ -12,13 +12,14 @@ type ui_msg =
     | Up
     | Down
     | UpdateField of field * string
+    | UpdateQuery of bool * string
 
 type navigation_msg =
     | ToEdit of int option
     | ToView
 
 type db_msg =
-    | LoadView
+    | LoadView of string option
     | LoadEdit 
     | EditThing of {
         name: string;
@@ -38,6 +39,7 @@ type t =
     | View of {
         things: Thing.t list;
         selected: int;
+        query: bool * string;
     }
     | Edit of {
         name: string;
@@ -53,6 +55,7 @@ type t =
 let initial_state = View {
     things = [];
     selected = 0;
+    query = (false, "");
 }
 
 let up = function
@@ -66,7 +69,7 @@ let up = function
 let down = function
     | View state -> View {
         state with
-        selected = min (List.length state.things - 1) (state.selected + 1)
+        selected = max 0 (min (List.length state.things - 1) (state.selected + 1))
     }
     | Edit state -> Edit state
     | Confirm state -> Confirm state
@@ -95,12 +98,6 @@ let can_save field name necessity =
     && name_length > 0
     && necessity_length > 0
 
-let to_view =
-    View {
-        things = [];
-        selected = 0;
-    }
-
 let update_field state field str =
     match state with
     | Edit state ->
@@ -110,6 +107,15 @@ let update_field state field str =
     | View state -> View state
     | Confirm state -> Confirm state
 
+let update_query state isQuerying str =
+    match state with
+    | View state -> View {
+        state with
+        query = (isQuerying, str);
+    }
+    | Edit state -> Edit state
+    | Confirm state -> Confirm state
+
 let reducer (state, msg) =
     let state =
         match msg with
@@ -117,10 +123,11 @@ let reducer (state, msg) =
             | Up -> up state
             | Down -> down state
             | UpdateField (field, str) -> update_field state field str
+            | UpdateQuery (isQuerying, str) -> update_query state isQuerying str
         )
         | Navigation navigation_msg -> (match navigation_msg with
             | ToEdit someId -> to_edit state someId
-            | ToView -> to_view
+            | ToView -> initial_state
         )
         | RequestConfirm (text, confirmMsg) -> to_confirm text confirmMsg
         | System _ -> state
@@ -129,9 +136,16 @@ let reducer (state, msg) =
     and msg = match msg with
         | Navigation navigation_msg -> (match navigation_msg with
             | ToEdit _ -> Db LoadEdit
-            | ToView -> Db LoadView
+            | ToView -> Db (LoadView None)
         )
-        | UI _ -> msg
+        | UI ui_msg -> (match ui_msg with
+            | Up -> msg
+            | Down -> msg
+            | UpdateField _ -> msg
+            | UpdateQuery (false, "") -> msg
+            | UpdateQuery (false, str) -> Db (LoadView (Some str))
+            | UpdateQuery _ -> msg
+        )
         | RequestConfirm _ -> msg
         | System _ -> msg
         | Db _ -> msg
