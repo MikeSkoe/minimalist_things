@@ -114,7 +114,6 @@ let edit_view field name necessity=
     )
 
 let list_view things selected query =
-    let debug = I.(string A.empty ("len: " ^ (string_of_int (List.length things)) ^ " selected" ^ (string_of_int selected))) in
     let query =
         let suffix = I.(char A.empty '/' 1 1) in
         match query with
@@ -122,13 +121,11 @@ let list_view things selected query =
             let cursor = I.(char A.(bg white) ' ' 1 1) in
             let str = I.(string A.empty str) in
             I.(suffix <|> str <|> cursor)
-        | (false, str) ->
-            let str = I.(string A.empty str) in
-            I.(suffix <|> str) in
+        | (false, _) -> I.empty in
     let info = I.(string A.empty "[j]-down [k]-up [a]-add item [e]-edit item [d]-delete item")
     and divider = I.(char A.empty '-' 10 1)
     and view = img_of_things things selected
-    in I.(debug <-> query <-> info <-> divider <-> view)
+    in I.(query <-> info <-> divider <-> view)
 
 let confirm_view text =
     let info = I.(string A.empty text)

@@ -1,3 +1,5 @@
+open Utils
+
 let make db_name =
     let db = Sqlite3.db_open db_name in
     let _ = Thing_db.create_table db in
@@ -5,10 +7,9 @@ let make db_name =
 
 let get_data = Thing_db.get_data
 
-let delete_thing db state id =
+let delete_thing db id =
     let open State in
-    match state with
-    | Confirm _ ->
+    on_confirm $ fun _ ->
         let _ = Thing_db.delete db id in
         let things = Thing_db.get_data db None in
         View {
@@ -16,17 +17,11 @@ let delete_thing db state id =
             selected = 0;
             query = (false, "");
         }
-    | Edit state -> Edit state
-    | View state -> View state
 
-let edit_thing db state someId name necessity =
+let edit_thing db someId name necessity =
     let open State in
-    match state with
-    | Edit _ ->
-        let _ = (match someId with
-            | Some id -> Thing_db.delete db id
-            | None -> true
-        ) in
+    on_edit $ fun _ ->
+        let _ = Utils.OptionFunctor.(Thing_db.delete db <$> someId) in
         let _ = Thing_db.add db name necessity in
         let things = Thing_db.get_data db None in
         View {
@@ -34,26 +29,22 @@ let edit_thing db state someId name necessity =
             selected = 0;
             query = (false, "");
         }
-    | View state -> View state
-    | Confirm state -> Confirm state
 
-let load_view db state str_opt =
+let load_view db str_opt =
     let open State in
-    match state with
-    | View state ->
+    on_view $ fun state -> 
         let things = Thing_db.get_data db str_opt in
         View {
             state with
             things;
         }
-    | Edit state -> Edit state
-    | Confirm state -> Confirm state
 
-let load_edit db state =
+let load_edit db =
     let open State in
-    match state with
-    | Edit state -> (match state.someId with
-        | Some id -> (match Thing_db.get_thing db id with
+    on_edit $ fun state ->
+        match state.someId with
+        | Some id -> (
+            match Thing_db.get_thing db id with
             | Some thing -> Edit {
                 state with
                 name = thing.name;
@@ -62,19 +53,16 @@ let load_edit db state =
             | None -> Edit state
         )
         | None -> Edit state
-    )
-    | Confirm state -> Confirm state
-    | View state -> View state
 
 let reducer (db: Index.t) (state, msg) =
     let open State in
     let state =
         match msg with
         | Db db_msg -> (match db_msg with
-            | LoadView str_opt -> load_view db state str_opt
+            | LoadView str_opt -> load_view db str_opt state
             | LoadEdit -> load_edit db state 
-            | EditThing { someId; necessity; name; } -> edit_thing db state someId name necessity 
-            | DeleteThing id -> delete_thing db state id
+            | EditThing { someId; necessity; name; } -> edit_thing db someId name necessity state
+            | DeleteThing id -> delete_thing db id state
         )
         | System _ -> state
         | Navigation _ -> state

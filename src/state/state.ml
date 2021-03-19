@@ -1,3 +1,5 @@
+open Utils
+
 module Thing = Thing
 
 type field =
@@ -35,22 +37,43 @@ type msg =
     | Db of db_msg
     | RequestConfirm of string * msg
 
+type view_state = {
+    things: Thing.t list;
+    selected: int;
+    query: bool * string;
+}
+
+type edit_state = {
+    name: string;
+    necessity: string;
+    field: field;
+    someId: int option;
+}
+
+type confirm_state = {
+    text: string;
+    confirmMsg: msg;
+}
+
 type t =
-    | View of {
-        things: Thing.t list;
-        selected: int;
-        query: bool * string;
-    }
-    | Edit of {
-        name: string;
-        necessity: string;
-        field: field;
-        someId: int option;
-    }
-    | Confirm of {
-        text: string;
-        confirmMsg: msg;
-    }
+    | View of view_state
+    | Edit of edit_state
+    | Confirm of confirm_state
+
+let on_view fn = function
+    | View { things; selected; query } -> fn { things; selected; query }
+    | Edit state -> Edit state
+    | Confirm state -> Confirm state
+
+let on_edit fn = function
+    | View state -> View state
+    | Edit { name; necessity; field; someId } -> fn { name; necessity; field; someId }
+    | Confirm state -> Confirm state
+
+let on_confirm fn = function
+    | View state -> View state
+    | Edit state -> Edit state
+    | Confirm { text; confirmMsg } -> fn { text; confirmMsg }
 
 let initial_state = View {
     things = [];
@@ -58,21 +81,17 @@ let initial_state = View {
     query = (false, "");
 }
 
-let up = function
-    | View state -> View {
+let up = on_view $ fun state ->
+    View {
         state with
-        selected = max 0 (state.selected - 1)
+        selected = max 0 (state.selected - 1);
     }
-    | Edit state -> Edit state
-    | Confirm state -> Confirm state
 
-let down = function
-    | View state -> View {
+let down = on_view $ fun state ->
+    View {
         state with
         selected = max 0 (min (List.length state.things - 1) (state.selected + 1))
     }
-    | Edit state -> Edit state
-    | Confirm state -> Confirm state
 
 let to_confirm text confirmMsg =
     Confirm {
@@ -80,16 +99,13 @@ let to_confirm text confirmMsg =
         confirmMsg;
     }
 
-let to_edit state someId =
-    match state with
-    | Edit state -> Edit state
-    | View _ -> Edit {
+let to_edit someId = on_view $ fun _ ->
+    Edit {
         someId;
         name = "";
         necessity = "";
         field = Name;
     }
-    | Confirm state -> Confirm state
 
 let can_save field name necessity =
     let name_length = name |> String.trim |> String.length
@@ -98,23 +114,16 @@ let can_save field name necessity =
     && name_length > 0
     && necessity_length > 0
 
-let update_field state field str =
-    match state with
-    | Edit state ->
-        if field = Name
-            then Edit { state with name = str; field = Name }
-            else Edit { state with necessity = str; field = Necessity }
-    | View state -> View state
-    | Confirm state -> Confirm state
+let update_field field str = on_edit $ fun state ->
+    if field = Name
+        then Edit { state with name = str; field = Name }
+        else Edit { state with necessity = str; field = Necessity }
 
-let update_query state isQuerying str =
-    match state with
-    | View state -> View {
+let update_query isQuerying str = on_view $ fun state ->
+    View {
         state with
         query = (isQuerying, str);
     }
-    | Edit state -> Edit state
-    | Confirm state -> Confirm state
 
 let reducer (state, msg) =
     let state =
@@ -122,11 +131,11 @@ let reducer (state, msg) =
         | UI cursor_msg -> (match cursor_msg with
             | Up -> up state
             | Down -> down state
-            | UpdateField (field, str) -> update_field state field str
-            | UpdateQuery (isQuerying, str) -> update_query state isQuerying str
+            | UpdateField (field, str) -> update_field field str state
+            | UpdateQuery (isQuerying, str) -> update_query isQuerying str state
         )
         | Navigation navigation_msg -> (match navigation_msg with
-            | ToEdit someId -> to_edit state someId
+            | ToEdit someId -> to_edit someId state
             | ToView -> initial_state
         )
         | RequestConfirm (text, confirmMsg) -> to_confirm text confirmMsg
@@ -142,7 +151,7 @@ let reducer (state, msg) =
             | Up -> msg
             | Down -> msg
             | UpdateField _ -> msg
-            | UpdateQuery (false, "") -> msg
+            | UpdateQuery (false, "") -> Db (LoadView None)
             | UpdateQuery (false, str) -> Db (LoadView (Some str))
             | UpdateQuery _ -> msg
         )
