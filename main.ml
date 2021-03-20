@@ -1,4 +1,4 @@
-let db = Db.make "test.db"
+let db = Db.make "base.db"
 let term = Notty_unix.Term.create ()
 
 let rec run (state, msg) =

@@ -60,6 +60,8 @@ type t =
     | Edit of edit_state
     | Confirm of confirm_state
 
+let get_curr_field (state: edit_state) = if state.field = Name then state.name else state.necessity
+
 let on_view fn = function
     | View { things; selected; query } -> fn { things; selected; query }
     | Edit state -> Edit state
@@ -107,17 +109,17 @@ let to_edit someId = on_view $ fun _ ->
         field = Name;
     }
 
-let can_save field name necessity =
-    let name_length = name |> String.trim |> String.length
-    and necessity_length = necessity |> String.trim |> String.length
-    in field = Necessity
+let can_save edit_state =
+    let name_length = edit_state.name |> String.trim |> String.length
+    and necessity_length = edit_state.necessity |> String.trim |> String.length in
+    edit_state.field = Necessity
     && name_length > 0
     && necessity_length > 0
 
 let update_field field str = on_edit $ fun state ->
     if field = Name
-        then Edit { state with name = str; field = Name }
-        else Edit { state with necessity = str; field = Necessity }
+    then Edit { state with name = str; field = Name }
+    else Edit { state with necessity = str; field = Necessity }
 
 let update_query isQuerying str = on_view $ fun state ->
     View {

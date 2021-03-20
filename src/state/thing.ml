@@ -6,12 +6,7 @@ type t = {
 
 let make ~id ~name ~necessity = { id; name; necessity }
 
-let string_of_t (selected: int) index t =
-      Printf.sprintf
-            "%s %s: %s"
-            (if selected = index then "* " else "  ")
-            t.name
-            t.necessity
+let get_name t = t.name
 
 (* Monad? *)
 let get_id things selected =
