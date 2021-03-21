@@ -1,7 +1,6 @@
 open Notty
 open Notty_unix
 
-
 module Input = struct
     let add_char str chr = str ^ (Char.escaped chr)
 
@@ -9,15 +8,28 @@ module Input = struct
         let chr_str = 
             let buffer = Buffer.create 1 in
             let _ = Buffer.add_utf_8_uchar buffer uchr in
-            Buffer.contents buffer in
+            Buffer.contents buffer
+        in
         str ^ chr_str
 
     let backspace str =
         let open Batteries in
         let utf_length = max 0 (BatUTF8.length str) in
         let last_char = BatUTF8.get str (utf_length - 1) in
-        let char_size = if BatUChar.is_ascii last_char then 1 else 2 in
+        let char_size = if BatUChar.is_ascii last_char then 1 else 2
+        in
         String.sub str 0 (max 0 ((String.length str) - char_size))
+
+    let draw label value active =
+        let label = I.string A.(st bold) label
+        and divider = I.(string A.empty " : ")
+        and cursor =
+            if active
+            then I.(char A.(bg white) ' ' 1 1)
+            else I.empty
+        and value = I.(string A.empty value)
+        in
+        I.(label <|> divider <|> value <|> cursor)
 end
 
 module Info = struct
@@ -46,11 +58,75 @@ module Info = struct
             let key = key |> string_of_key |> I.(string A.(st bold))
             and action = I.(string A.(fg lightblack) action)
             and space = I.(string A.empty " ")
-            in I.(key <|> space <|> action <|> space)
+            in
+            I.(key <|> space <|> action <|> space)
         )
         |> List.fold_left I.(<|>) I.empty
         |> fun info -> I.(info <-> draw_divider)
 end
+module Thing = struct
+    let draw (thing: State.Thing.t) selected =
+        let suffix =
+            if selected
+            then I.(string A.empty "• ")
+            else I.(string A.empty "  ") in
+        let name = I.(string A.(st bold) thing.name) in
+        let necessity = I.(string A.empty thing.necessity) in
+        let divider = I.(string A.empty " : ")
+        in
+        I.(suffix <|> name <|> divider <|> necessity)
+end
+
+module Query = struct
+    let draw =
+        function
+        | (false, "") -> I.empty
+        | (changing, str) -> Input.(draw "FIND" str changing)
+end
+
+let list_view (state: State.view_state) =
+    let active_actions = [(Info.Space, "ADD"); (Info.Enter, "EDIT"); (Info.Backspace, "DELETE"); (Info.Slash, "FIND")]
+    in
+    I.(
+        Query.(draw state.query)
+        <-> Info.(draw active_actions)
+        <-> (
+            state.things
+            |> List.mapi (fun index thing -> Thing.draw thing (index = state.selected))
+            |> List.fold_left I.(<->) I.empty
+        )
+    )
+
+let edit_view edit_state =
+    let active_actions = 
+        if State.can_save edit_state
+        then [(Info.Enter, "Save"); (Info.Escape, "CANCEL")]
+        else [(Info.Escape, "CANCEL")] in
+    let is_name_active = (edit_state.field = State.Name) in
+    let is_necessity_active = (edit_state.field = State.Necessity)
+    in
+    I.(
+        Info.(draw active_actions)
+        <-> Input.(draw "Name     " edit_state.name is_name_active)
+        <-> Input.(draw "Necessity" edit_state.necessity is_necessity_active)
+    )
+
+let confirm_view (state: State.confirm_state) =
+    let active_actions = [(Info.Enter, "OK"); (Info.Escape, "CANCEL")]
+    in
+    I.(
+        Info.(draw active_actions)
+        <-> I.(string A.empty state.text)
+    )
+
+let draw term state =
+    let open State in
+    let view =
+        match state with
+        | Edit state -> edit_view state
+        | View state -> list_view state
+        | Confirm state -> confirm_view state in
+    Term.image term view
 
 let getEvent term state =
     let open State in
@@ -78,11 +154,13 @@ let getEvent term state =
                 | `Key (`Arrow `Down, _) -> UI Down
                 | `Key (`ASCII ' ', _) -> Navigation (ToEdit None)
                 | `Key (`Enter, _) -> Navigation (ToEdit (Thing.get_id state.things state.selected))
-                | `Key (`Backspace, _) ->
-                    let text = "Are your shure, you want to delete the item?"
-                    and id = List.(nth state.things state.selected).id
-                    in
-                    RequestConfirm (text, Db (DeleteThing id))
+                | `Key (`Backspace, _) -> (
+                    try RequestConfirm (
+                        "Are your shure, you want to delete the item?",
+                        Db (DeleteThing List.(nth state.things state.selected).id)
+                    )
+                    with Failure _ -> System Nothing
+                )
                 | `Key (`ASCII '/', _) -> UI (UpdateQuery (true, ""))
                 | `Key (`ASCII 'q', _)
                 | _ -> System Nothing
@@ -121,68 +199,6 @@ let getEvent term state =
 
         | _ -> System Nothing
     )
-
-let img_of_things (things: State.Thing.t list) (selected: int) =
-    things
-    |> List.mapi (fun index (thing : State.Thing.t) ->
-        let selected =
-            if index = selected
-            then I.(string A.empty "• ")
-            else I.(string A.empty "  ")
-        and name = I.(string A.(st bold) thing.name)
-        and necessity = I.(string A.empty thing.necessity)
-        and space = I.(string A.empty ": ")
-        in I.(selected <|> name <|> space <|> necessity)
-    )
-    |> List.fold_left I.(<->) I.empty
-
-let edit_view edit_state =
-    let draw_info =
-        if State.can_save edit_state
-        then Info.(draw [(Enter, "Save"); (Escape, "CANCEL")])
-        else Info.(draw [(Escape, "CANCEL")]) in
-    let cursor = I.(char A.(bg white) ' ' 1 1) in
-    let empty = I.(char A.empty ' ' 1 1) in
-    let (name_cursor, necessity_cursor) =
-        if edit_state.field = State.Name
-        then (cursor, empty)
-        else (empty, cursor) in
-    let name = I.(string A.empty ("Name      : " ^ edit_state.name)) in
-    let necessity = I.(string A.empty ("Necessity : " ^ edit_state.necessity))
-    in I.(
-        draw_info
-        <-> (name <|> name_cursor)
-        <-> (necessity <|> necessity_cursor)
-    )
-
-let draw_query query = 
-    let suffix = I.(char A.empty '/' 1 1) in
-    match query with
-    | (false, "") -> I.empty
-    | (changing, str) -> 
-        let cursor = I.(char A.(bg white) ' ' 1 1) in
-        let str = I.(string A.empty str) in
-        I.(suffix <|> str <|> (if changing = true then cursor else empty))
-
-let list_view (state: State.view_state) =
-    let query = draw_query state.query
-    and view = img_of_things state.things state.selected
-    and draw_info = Info.(draw [(Space, "ADD"); (Enter, "EDIT"); (Backspace, "DELETE"); (Slash, "FIND")]) in
-    I.(query <-> draw_info <-> view)
-
-let confirm_view (state: State.confirm_state) =
-    let draw_info = Info.(draw [(Enter, "OK"); (Escape, "CANCEL")]) in
-    let text = I.(string A.empty state.text) in
-    I.(draw_info <-> text)
-
-let draw term state =
-    let open State in
-    let view =
-        match state with
-        | Edit state -> edit_view state
-        | View state -> list_view state
-        | Confirm state -> confirm_view state in
-    Term.image term view
 
 let reducer (term: Term.t) (state, _msg) =
     let _ = draw term state

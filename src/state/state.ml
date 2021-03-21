@@ -125,6 +125,7 @@ let update_query isQuerying str = on_view $ fun state ->
     View {
         state with
         query = (isQuerying, str);
+        selected = 0;
     }
 
 let reducer (state, msg) =
