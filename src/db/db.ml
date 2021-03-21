@@ -12,11 +12,7 @@ let delete_thing db id =
     on_confirm $ fun _ ->
         let _ = Thing_db.delete db id in
         let things = Thing_db.get_data db None in
-        View {
-            things;
-            selected = 0;
-            query = (false, "");
-        }
+        View View.(make things (false, ""))
 
 let edit_thing db someId name necessity =
     let open State in
@@ -24,20 +20,13 @@ let edit_thing db someId name necessity =
         let _ = Utils.OptionFunctor.(Thing_db.delete db <$> someId) in
         let _ = Thing_db.add db name necessity in
         let things = Thing_db.get_data db None in
-        View {
-            things;
-            selected = 0;
-            query = (false, "");
-        }
+        View View.(make things (false, ""))
 
 let load_view db str_opt =
     let open State in
     on_view $ fun state -> 
         let things = Thing_db.get_data db str_opt in
-        View {
-            state with
-            things;
-        }
+        View View.(make things state.query)
 
 let load_edit db =
     let open State in
@@ -45,11 +34,7 @@ let load_edit db =
         match state.someId with
         | Some id -> (
             match Thing_db.get_thing db id with
-            | Some thing -> Edit {
-                state with
-                name = thing.name;
-                necessity = thing.necessity;
-            }
+            | Some thing -> Edit (Edit.make (Some id) thing.name thing.necessity)
             | None -> Edit state
         )
         | None -> Edit state
@@ -58,15 +43,16 @@ let reducer (db: Index.t) (state, msg) =
     let open State in
     let state =
         match msg with
-        | Db db_msg -> (match db_msg with
+        | Db db_msg -> (
+            match db_msg with
             | LoadView str_opt -> load_view db str_opt state
             | LoadEdit -> load_edit db state 
-            | EditThing { someId; necessity; name; } -> edit_thing db someId name necessity state
+            | EditThing {someId; name; necessity} -> edit_thing db someId name necessity state
             | DeleteThing id -> delete_thing db id state
         )
         | System _ -> state
         | Navigation _ -> state
         | UI _ -> state
-        | RequestConfirm _ -> state
-    in (state, msg)
+        | RequestConfirm _ -> state in
+    (state, msg)
 

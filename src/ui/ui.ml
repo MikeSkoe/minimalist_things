@@ -1,7 +1,7 @@
 open Notty
 open Notty_unix
 
-let list_view (state: State.view_state) =
+let list_view (state: State.View.t) =
     let actions = [(Info.Space, "ADD"); (Info.Enter, "EDIT"); (Info.Backspace, "DELETE"); (Info.Slash, "FIND")]
     in
     I.(
@@ -14,9 +14,9 @@ let list_view (state: State.view_state) =
         )
     )
 
-let edit_view (state: State.edit_state) =
+let edit_view (state: State.Edit.t) =
     let actions = 
-        if State.can_save state
+        if State.Edit.can_save state
         then [(Info.Enter, "Save"); (Info.Escape, "CANCEL")]
         else [(Info.Escape, "CANCEL")]
     in
@@ -27,7 +27,7 @@ let edit_view (state: State.edit_state) =
             {
                 label="Name     ";
                 value=state.name;
-                active=(state.field = State.Name)
+                active=(state.field = State.Edit.Name)
             }
         )
         <-> Input.Img.(
@@ -35,12 +35,12 @@ let edit_view (state: State.edit_state) =
             {
                 label="Necessity";
                 value=state.necessity;
-                active=(state.field = State.Necessity)
+                active=(state.field = State.Edit.Necessity)
             }
         )
     )
 
-let confirm_view (state: State.confirm_state) =
+let confirm_view (state: State.msg State.Confirm.t) =
     let actions = [(Info.Enter, "OK"); (Info.Escape, "CANCEL")]
     in
     I.(
@@ -108,20 +108,20 @@ let getEvent term state =
         | `Key (`Arrow `Up, _) -> UI (UpdateField (Name, state.name))
         | `Key (`Arrow `Down, _) -> UI (UpdateField (Necessity, state.necessity))
         | `Key (`Enter, _) ->
-            if State.can_save state
+            if State.Edit.can_save state
             then Db (EditThing { name = state.name; necessity = state.necessity; someId = state.someId })
             else UI (UpdateField (Necessity, state.necessity))
  
         | `Key (`Uchar uchr, _) ->
-            let str = State.get_curr_field state in
+            let str = State.Edit.get_curr_field state in
             UI (UpdateField (state.field, Input.add_uchar str uchr))
 
         | `Key (`ASCII chr, _) ->
-            let str = State.get_curr_field state in
+            let str = State.Edit.get_curr_field state in
             UI (UpdateField (state.field, Input.add_char str chr))
 
         | `Key (`Backspace, _) ->
-            let str = State.get_curr_field state in
+            let str = State.Edit.get_curr_field state in
             UI (UpdateField (state.field, Input.backspace str))
 
         | `Key (`Escape, _) -> Navigation ToView
@@ -129,7 +129,7 @@ let getEvent term state =
         | _ -> System Nothing
     )
 
-let reducer (term: Term.t) (state, _msg) =
+let reducer term (state, _msg) =
     let _ = draw term state
     and msg = getEvent term state
     in (state, msg)

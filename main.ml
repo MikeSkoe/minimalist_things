@@ -12,5 +12,5 @@ let rec run (state, msg) =
         |> Ui.reducer term
         |> run
 
-let _ = run State.(initial_state, Navigation ToView)
+let _ = run State.(View View.(make [] (false, "")), Navigation ToView)
 
