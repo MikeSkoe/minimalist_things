@@ -1,5 +1,3 @@
-open Utils
-
 module Thing = Thing
 module View = View
 module Edit = Edit
@@ -56,19 +54,19 @@ let on_confirm fn = function
     | Edit state -> Edit state
     | Confirm state -> fn state
 
-let to_edit someId = on_view $ fun _ ->
+let to_edit someId = on_view @@ fun _ ->
     Edit Edit.(make someId "" "")
 
-let update_query query = on_view $ fun state ->
+let update_query query = on_view @@ fun state ->
     View View.(make state.things query)
 
-let update_field field str = on_edit $ fun state ->
+let update_field field str = on_edit @@ fun state ->
     Edit Edit.(update_field field str state)
 
-let up = on_view $ fun state ->
+let up = on_view @@ fun state ->
     View View.(up state)
 
-let down = on_view $ fun state ->
+let down = on_view @@ fun state ->
     View View.(down state)
 
 let reducer (state, msg) =
