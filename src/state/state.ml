@@ -3,19 +3,17 @@ module View = View
 module Edit = Edit
 module Confirm = Confirm
 
-type system_msg =
-    | Quit
-    | Nothing
-
 type ui_msg =
-    | Up
-    | Down
     | UpdateField of Edit.field * string
     | UpdateQuery of bool * string
 
 type navigation_msg =
     | ToEdit of int option
     | ToView
+    | Up
+    | Down
+    | Quit
+    | Nothing
 
 type db_msg =
     | LoadView of string option
@@ -28,7 +26,6 @@ type db_msg =
     | DeleteThing of int
 
 type msg =
-    | System of system_msg
     | Navigation of navigation_msg
     | UI of ui_msg
     | Db of db_msg
@@ -74,8 +71,6 @@ let reducer (state, msg) =
         match msg with
         | UI cursor_msg -> (
             match cursor_msg with
-            | Up -> up state
-            | Down -> down state
             | UpdateField (field, str) -> update_field field str state
             | UpdateQuery (active, str) -> update_query (active, str) state
         )
@@ -83,29 +78,33 @@ let reducer (state, msg) =
             match navigation_msg with
             | ToEdit someId -> to_edit someId state
             | ToView -> View View.(make [] (false, ""))
+            | Up -> up state
+            | Down -> down state
+            | Quit -> state
+            | Nothing -> state
         )
         | RequestConfirm (text, confirmMsg) -> Confirm Confirm.(make text confirmMsg)
-        | System _ -> state
         | Db _ -> state
 
     and msg =
         match msg with
         | Navigation navigation_msg -> (
             match navigation_msg with
+            | Up -> msg
+            | Down -> msg
             | ToEdit _ -> Db LoadEdit
             | ToView -> Db (LoadView None)
+            | Quit -> msg
+            | Nothing -> msg
         )
         | UI ui_msg -> (
             match ui_msg with
-            | Up -> msg
-            | Down -> msg
             | UpdateField _ -> msg
             | UpdateQuery (false, "") -> Db (LoadView None)
             | UpdateQuery (false, str) -> Db (LoadView (Some str))
             | UpdateQuery _ -> msg
         )
         | RequestConfirm _ -> msg
-        | System _ -> msg
         | Db _ -> msg
 
     in (state, msg)

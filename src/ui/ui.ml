@@ -70,17 +70,17 @@ let getEvent term state =
                 | `Key (`ASCII chr, _) -> UI (UpdateQuery (true, Input.add_char query chr))
                 | `Key (`Uchar uchr, _) -> UI (UpdateQuery (true, Input.add_uchar query uchr))
                 | `Key (`Backspace, _) -> UI (UpdateQuery (true, Input.backspace query))
-                | _ -> System Nothing
+                | _ -> Navigation Nothing
             )
             | (false, query) -> (
                 match event with
                 | `Key (`Escape, _) ->
                     if query = ""
-                    then System Quit
+                    then Navigation Quit
                     else UI (UpdateQuery (false, ""))
 
-                | `Key (`Arrow `Up, _) -> UI Up
-                | `Key (`Arrow `Down, _) -> UI Down
+                | `Key (`Arrow `Up, _) -> Navigation Up
+                | `Key (`Arrow `Down, _) -> Navigation Down
                 | `Key (`ASCII ' ', _) -> Navigation (ToEdit None)
                 | `Key (`Enter, _) -> Navigation (ToEdit (Thing.get_id state.things state.selected))
                 | `Key (`Backspace, _) -> (
@@ -88,11 +88,11 @@ let getEvent term state =
                         "Are your shure, you want to delete the item?",
                         Db (DeleteThing List.(nth state.things state.selected).id)
                     )
-                    with Failure _ -> System Nothing
+                    with Failure _ -> Navigation Nothing
                 )
                 | `Key (`ASCII '/', _) -> UI (UpdateQuery (true, ""))
                 | `Key (`ASCII 'q', _)
-                | _ -> System Nothing
+                | _ -> Navigation Nothing
             )
     )
 
@@ -100,7 +100,7 @@ let getEvent term state =
         match event with
         | `Key (`Escape, _) -> Navigation ToView
         | `Key (`Enter, _) -> state.confirmMsg
-        | _ -> System Nothing
+        | _ -> Navigation Nothing
     )
 
     | Edit state -> (
@@ -126,7 +126,7 @@ let getEvent term state =
 
         | `Key (`Escape, _) -> Navigation ToView
 
-        | _ -> System Nothing
+        | _ -> Navigation Nothing
     )
 
 let reducer term (state, _msg) =

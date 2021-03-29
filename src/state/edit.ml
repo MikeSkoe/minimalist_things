@@ -29,7 +29,6 @@ let update_field field str state =
 let can_save state =
     let name_length = state.name |> String.trim |> String.length
     and necessity_length = state.necessity |> String.trim |> String.length in
-    state.field = Necessity
-    && name_length > 0
+    name_length > 0
     && necessity_length > 0
 

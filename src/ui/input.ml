@@ -12,10 +12,9 @@ let add_uchar str uchr =
 
 let backspace str =
     let open Batteries in
-    let utf_length = max 0 (BatUTF8.length str) in
-    let last_char = BatUTF8.get str (utf_length - 1) in
-    let char_size = if BatUChar.is_ascii last_char then 1 else 2
-    in
+    let utf_next_length = max 0 ((BatUTF8.length str) - 1) in
+    let last_char = BatUTF8.get str utf_next_length in
+    let char_size = if BatUChar.is_ascii last_char then 1 else 2 in
     String.sub str 0 (max 0 ((String.length str) - char_size))
 
 type props = {

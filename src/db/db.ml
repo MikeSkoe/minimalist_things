@@ -49,7 +49,6 @@ let reducer (db: Index.t) (state, msg) =
             | EditThing {someId; name; necessity} -> edit_thing db someId name necessity state
             | DeleteThing id -> delete_thing db id state
         )
-        | System _ -> state
         | Navigation _ -> state
         | UI _ -> state
         | RequestConfirm _ -> state in
