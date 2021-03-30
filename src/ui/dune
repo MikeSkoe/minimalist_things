@@ -1,3 +1,3 @@
 (library
  (name ui)
- (libraries nottui unix state utils batteries))
+ (libraries nottui unix utils batteries state))

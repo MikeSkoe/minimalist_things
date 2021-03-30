@@ -1,3 +1,8 @@
+type thing_row = {
+      id: int;
+      name: string;
+      necessity: string;
+}
 
 let create_table (db: Index.t) =
     let create_sql = "CREATE TABLE IF NOT EXISTS things (id integer PRIMARY KEY, name text NOT null, necessity text NOT NULL)" in
@@ -6,7 +11,7 @@ let create_table (db: Index.t) =
     | Sqlite3.Rc.OK -> true
     | _ -> false
 
-let get_data (db: Index.t) opt_str =
+let get_data (db: Index.t) opt_str : thing_row list =
     let select_sql =
         match opt_str with
         | Some query -> ("SELECT id, name, necessity FROM things WHERE necessity LIKE '%" ^ query ^ "%'")
@@ -20,7 +25,7 @@ let get_data (db: Index.t) opt_str =
             let id = int_of_index 0
             and name = string_of_index 1
             and necessity = string_of_index 2 in
-            iter [State.Thing.make ~id ~name ~necessity] @ datas
+            iter [{id; name; necessity;}] @ datas
         | _ -> datas in
     iter [];;
 
@@ -35,7 +40,7 @@ let get_thing (db: Index.t) id =
         let id = int_of_index 0
         and name = string_of_index 1
         and necessity = string_of_index 2 in
-        Some (State.Thing.make ~id ~name ~necessity)
+        Some {id; name; necessity;}
     | _ -> None
 
 let add (db: Index.t) name necessity =

@@ -1,16 +1,15 @@
 let db = Db.make "base.db"
 let term = Notty_unix.Term.create ()
 
-let rec run (state, msg) =
+let rec run ((state, msgs): State.model * State.msg list) =
     let open State in
-    match msg with
-    | Navigation Quit -> ()
-    | msg -> 
-    (state, msg)
-        |> State.reducer
-        |> Db.reducer db
+    match msgs with
+    | [`Navigation Navigation.Quit] -> ()
+    | msgs -> 
+    (state, msgs)
+        |> State.reducer db
         |> Ui.reducer term
         |> run
 
-let _ = run State.(View View.(make [] (false, "")), Navigation ToView)
+let _ = run State.(View View.initial_model, [`Navigation Navigation.ToView])
 
