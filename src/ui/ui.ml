@@ -6,7 +6,10 @@ module Input = Input
 module Info = Info
 module Confirm = Confirm
 
-let reducer term (state, _msgs) =
+let term = Notty_unix.Term.create ()
+
+let reducer (state, _msgs) =
+
       let view =
             match state with
             | State.View state -> View.draw state

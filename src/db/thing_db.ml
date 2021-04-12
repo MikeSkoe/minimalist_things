@@ -1,3 +1,5 @@
+type db = Index.t
+
 type thing_row = {
       id: int;
       name: string;
@@ -43,7 +45,7 @@ let get_thing (db: Index.t) id =
         Some {id; name; necessity;}
     | _ -> None
 
-let add (db: Index.t) name necessity =
+let add_thing (db: Index.t) name necessity =
     let insert_sql = Printf.sprintf
         "INSERT INTO things(name, necessity) VALUES ('%s','%s')"
         name necessity in
@@ -52,7 +54,7 @@ let add (db: Index.t) name necessity =
     | Sqlite3.Rc.OK -> true
     | _ -> false
 
-let delete (db: Index.t) id =
+let delete_thing (db: Index.t) id =
     let delete_sql = Printf.sprintf
         "DELETE FROM things WHERE id = %i"
         id in

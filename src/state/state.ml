@@ -25,21 +25,26 @@ let on_edit fn =
 
 let noop a = a
 
-let reducer db (state, msgs) =
-      let state = 
-            msgs
-            |> List.fold_left (fun state msg ->
-                  match msg with
-                  | `Navigation msg ->
-                        begin match msg with
-                        | Navigation.ToEdit id_opt -> Edit Edit.(update db (Init id_opt) initial_model)
-                        | Navigation.ToView -> View View.(update db (Init None) initial_model)
-                        | Navigation.Nothing -> noop state
-                        | Navigation.Quit -> noop state
-                        end
-                  | `View msg -> (on_view View.(update db msg)) state
-                  | `Edit msg -> (on_edit Edit.(update db msg)) state
-            ) state in
+module Make(Input: Abstract.DB) = struct
+      module View_Page = View.Make(Input)
+      module Edit_Page = Edit.Make(Input)
 
-      (state, msgs)
+      let reducer (state, msgs) =
+            let state = 
+                  msgs
+                  |> List.fold_left (fun state msg ->
+                        match msg with
+                        | `Navigation msg ->
+                              begin match msg with
+                              | Navigation.ToEdit id_opt -> Edit Edit_Page.(update (Init id_opt) initial_model)
+                              | Navigation.ToView -> View View_Page.(update (Init None) initial_model)
+                              | Navigation.Nothing -> noop state
+                              | Navigation.Quit -> noop state
+                              end
+                        | `View msg -> (on_view View_Page.(update msg)) state
+                        | `Edit msg -> (on_edit Edit_Page.(update msg)) state
+                  ) state in
+
+            (state, msgs)
+end
 
