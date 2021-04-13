@@ -1,15 +1,8 @@
 open Notty_unix
 
-module Query = Query
-module Thing = Thing
-module Input = Input
-module Info = Info
-module Confirm = Confirm
-
 let term = Notty_unix.Term.create ()
 
 let reducer (state, _msgs) =
-
       let view =
             match state with
             | State.View state -> View.draw state

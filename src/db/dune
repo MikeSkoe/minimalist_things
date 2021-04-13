@@ -1,4 +1,4 @@
 (library
  (name db)
- (libraries sqlite3 utils batteries))
+ (libraries sqlite3 utils batteries state))
 

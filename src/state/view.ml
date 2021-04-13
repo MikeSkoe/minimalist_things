@@ -42,10 +42,7 @@ module Make(Input: Abstract.DB) = struct
       })
 
       let load_view str_opt =
-            let things =
-                  Input.Thing.get_data db str_opt
-                  |> List.map @@ fun ({id; name; necessity}: Input.Thing.thing_row) -> Thing.make ~id ~name ~necessity
-            in
+            let things = Input.Thing.get db str_opt in
             { initial_model with
             things;
             query =
@@ -60,7 +57,7 @@ module Make(Input: Abstract.DB) = struct
       let apply_confirm state =
             match state.confirm with
             | Some (DeleteThing id) ->
-                  let _ = Input.Thing.delete_thing db id in
+                  let _ = Input.Thing.delete db id in
                   { state with confirm = None }
             | None -> state
 

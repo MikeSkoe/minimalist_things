@@ -1,6 +1,6 @@
 module MyState = State.Make(Db)
 
-let rec run ((state, msgs): State.model * State.msg list) =
+let rec run (state, msgs) =
     let open State in
     match msgs with
     | [`Navigation Navigation.Quit] -> ()

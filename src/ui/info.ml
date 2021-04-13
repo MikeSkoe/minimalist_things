@@ -25,15 +25,14 @@ type props = {
 
 module Img : Image.IMG with type props := props = struct
       let draw {actions} =
-      actions
-      |> List.map (fun (key, action) ->
-            let key = key |> string_of_key |> I.(string A.(st bold))
-            and action = I.(string A.(fg lightblack) action)
-            and space = I.(string A.empty " ")
-            in
-            I.(key <|> space <|> action <|> space)
-      )
-      |> List.fold_left I.(<|>) I.empty
-      |> fun info -> I.(info <-> draw_divider)
+            actions
+            |> List.map (fun (key, action) ->
+                  let key = key |> string_of_key |> I.(string A.(st bold))
+                  and action = I.(string A.(fg lightblack) action)
+                  and space = I.(string A.empty " ") in
+                  I.(key <|> space <|> action <|> space)
+            )
+            |> List.fold_left I.(<|>) I.empty
+            |> fun info -> I.(info <-> draw_divider)
 end
 

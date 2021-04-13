@@ -45,7 +45,7 @@ module Make(Input: Abstract.DB) = struct
       let init =
             function
             | Some id ->
-                  begin match Input.Thing.get_thing db id with
+                  begin match Input.Thing.get_one db id with
                   | Some item ->
                         { initial_model with
                               name = item.name;
@@ -59,11 +59,11 @@ module Make(Input: Abstract.DB) = struct
       let save_thing state =
             begin match state.someId with
             | Some id ->
-                  let _ = Input.Thing.delete_thing db id in
-                  let _ = Input.Thing.add_thing db state.name state.necessity in
+                  let _ = Input.Thing.delete db id in
+                  let _ = Input.Thing.add db state.name state.necessity in
                   initial_model
             | None ->
-                  let _ = Input.Thing.add_thing db state.name state.necessity in
+                  let _ = Input.Thing.add db state.name state.necessity in
                   initial_model
             end
 

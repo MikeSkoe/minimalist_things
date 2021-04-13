@@ -37,28 +37,21 @@ let get_messages event state =
       | _ -> [`Navigation State.Navigation.Nothing]
 
 let draw state =
-    let actions = 
-        if can_save state
-        then [(Info.Enter, "Save"); (Info.Escape, "CANCEL")]
-        else [(Info.Escape, "CANCEL")]
-    in
-    I.(
-        Info.Img.(draw {actions})
-        <-> Input.Img.(
-            draw
-            {
-                label="Name     ";
-                value=state.name;
-                active=(state.field=Name)
-            }
-        )
-        <-> Input.Img.(
-            draw
-            {
-                label="Necessity";
-                value=state.necessity;
-                active=(state.field=Necessity)
-            }
-        )
-    )
+      let actions = 
+            if can_save state
+            then [(Info.Enter, "Save"); (Info.Escape, "CANCEL")]
+            else [(Info.Escape, "CANCEL")] in
+      I.(
+            Info.Img.(draw {actions})
+            <-> Input.Img.(draw {
+                  label="Name     ";
+                  value=state.name;
+                  active=(state.field=Name)
+            })
+            <-> Input.Img.(draw {
+                  label="Necessity";
+                  value=state.necessity;
+                  active=(state.field=Necessity)
+            })
+      )
 
