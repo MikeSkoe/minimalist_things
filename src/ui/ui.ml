@@ -1,5 +1,3 @@
-open Notty_unix
-
 let term = Notty_unix.Term.create ()
 
 let reducer (state, _msgs) =
@@ -9,9 +7,9 @@ let reducer (state, _msgs) =
             | State.Edit state -> Edit.draw state
             in
 
-      Term.image term view;
+      Notty_unix.Term.image term view;
 
-      let event = Term.event term in
+      let event = Notty_unix.Term.event term in
       let msgs =
             match state with
             | View state -> View.get_messages event state

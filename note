@@ -1,5 +1,4 @@
 
-- State     (state, msg) =>                      (state, msg)
-- UI (term) (state, msg) => * render effect * => (state, msg)
-- DB (db)   (state, msg) => * db effect *     => (state, msg)
+- State (db) (state, msg) => * db effect *     => (state, msg)
+- UI (term)  (state, msg) => * render effect * => (state, msg)
 

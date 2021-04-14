@@ -1,3 +1,2 @@
 (library
- (name state)
- (libraries utils))
+ (name state))
