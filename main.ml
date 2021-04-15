@@ -1,6 +1,6 @@
 module MyState = State.Make(Db)
 
-let rec run (state, msgs) =
+let rec loop (state, msgs) =
     let open State in
     match msgs with
     | [`Navigation Navigation.Quit] -> ()
@@ -8,7 +8,7 @@ let rec run (state, msgs) =
     (state, msgs)
         |> MyState.reducer
         |> Ui.reducer
-        |> run
+        |> loop
 
-let _ = run MyState.(View View_Page.initial_model, [`Navigation State.Navigation.ToView])
+let _ = loop MyState.(View View_Page.initial_model, [`Navigation State.Navigation.ToView])
 
